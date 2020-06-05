@@ -1,15 +1,12 @@
-package firebaserepo
+package firestorerepo
 
 import (
 	"context"
 	"errors"
 	"log"
-	"time"
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
-
-	"google.golang.org/api/iterator"
 )
 
 // client is a Firestore client, reused between function invocations.
@@ -37,12 +34,10 @@ func FetchEvent(ctx context.Context, eventID string) (Event, error) {
 	var event Event
 	doc, err := client.Doc("event/" + eventID).Get(ctx)
 	if err != nil {
-		return event, errors.New("Fetching event " + eventID +
-			" failed")
+		return event, errors.New("Fetching event " + eventID + " failed")
 	}
 	if err := doc.DataTo(&event); err != nil {
-		return event, errors.New("Failed to convert event json data " +
-			"to struct")
+		return event, errors.New("Failed to convert event json data to struct")
 	}
 
 	return event, nil

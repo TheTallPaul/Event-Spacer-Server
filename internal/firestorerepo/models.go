@@ -1,4 +1,4 @@
-package firebaserepo
+package firestorerepo
 
 import (
 	"time"
@@ -7,7 +7,7 @@ import (
 )
 
 // An Event is a struct conversion of a Firestore document for events
-type Ride struct {
+type Event struct {
 	ID            string           `firestore:"-"`
 	ClaimedSpots  []*latlng.LatLng `firestore:"claimed_spots"`
 	Expiration    time.Time        `firestore:"expiration"`

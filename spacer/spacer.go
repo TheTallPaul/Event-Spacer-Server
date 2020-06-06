@@ -2,7 +2,6 @@
 package spacer
 
 import (
-	//"log"
 	"math"
 
 	"eventspacer.org/spacer/internal/firestorerepo"

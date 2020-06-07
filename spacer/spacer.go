@@ -9,28 +9,25 @@ import (
 )
 
 // Curvature constants
-const EarthRadius = 6378137.0 // meters
-const DegreesToRadians = math.Pi / 180
-const RadiansToDegrees = 180 / math.Pi
+const earthRadius = 6378137.0 // meters
+const degreesToRadians = math.Pi / 180
+const radiansToDegrees = 180 / math.Pi
 
 // Bearing directions
-const N = 0.0
-const E = 90.0
-const SE = 135.0
-const S = 180.0
-const W = 270.0
-
-// The maximum number of points allowed
-const MaxNumPoints = 50000
+const north = 0.0
+const east = 90.0
+const southeast = 135.0
+const south = 180.0
+const west = 270.0
 
 // CreateSpacedPoints adds points spaced out the provided distance, starting in a
 // clockwise spiral pattern from the center
-func CreateSpacedPoints(event *firestorerepo.Event) {
+func CreateSpacedPoints(event *firestorerepo.Event, maxNumPoints int) {
 	// Find and add centerpoint
 	center := asTheCrowFlies(
 		event.NWBoundary,
 		haversineDistance(event.NWBoundary, event.SEBoundary)/2,
-		SE,
+		southeast,
 	)
 	event.SpacedPoints = append(event.SpacedPoints, center)
 
@@ -39,7 +36,7 @@ func CreateSpacedPoints(event *firestorerepo.Event) {
 	direction := 'N'
 	spiralSegments := 1
 	spiralTurn := false
-	numPoints := 0
+	numPoints := 1
 	var maxPoint = latlng.LatLng{
 		Longitude: center.Longitude,
 		Latitude:  center.Latitude,
@@ -51,30 +48,30 @@ func CreateSpacedPoints(event *firestorerepo.Event) {
 
 	// Plop down points in a 90 degree spiral pattern, increasing the length of a
 	// spiral side every two straight lines
-	for (maxPoint.Latitude <= event.NWBoundary.Latitude ||
-		minPoint.Latitude >= event.SEBoundary.Latitude ||
-		maxPoint.Longitude <= event.SEBoundary.Longitude ||
-		minPoint.Longitude >= event.NWBoundary.Longitude) &&
-		numPoints <= MaxNumPoints {
-
+	for numPoints < maxNumPoints && partiallyInBoundaries(
+		maxPoint, minPoint, event.NWBoundary, event.SEBoundary) {
 		// Move the number of segments in the chosen direction
 		for i := 0; i < spiralSegments; i++ {
 			switch direction {
 			// North
 			case 'N':
-				current = asTheCrowFlies(current, event.SpacingMeters, N)
+				current = asTheCrowFlies(
+					current, event.SpacingMeters, north)
 				maxPoint.Latitude = current.Latitude
 			// East
 			case 'E':
-				current = asTheCrowFlies(current, event.SpacingMeters, E)
+				current = asTheCrowFlies(
+					current, event.SpacingMeters, east)
 				maxPoint.Longitude = current.Longitude
 			// South
 			case 'S':
-				current = asTheCrowFlies(current, event.SpacingMeters, S)
+				current = asTheCrowFlies(
+					current, event.SpacingMeters, south)
 				minPoint.Latitude = current.Latitude
 			// West
 			case 'W':
-				current = asTheCrowFlies(current, event.SpacingMeters, W)
+				current = asTheCrowFlies(
+					current, event.SpacingMeters, west)
 				minPoint.Longitude = current.Longitude
 			}
 
@@ -123,14 +120,41 @@ func inBoundaries(point, boundaryA, boundaryB *latlng.LatLng) bool {
 	return false
 }
 
+// partiallyInBoundary checks if at least one point is partially within the boundaries of
+// the boundary points. For example (-1,-1)(2,3) would partially be in the boundary
+// created by (0,0) and (2,2).
+func partiallyInBoundaries(point1, point2 latlng.LatLng, boundaryA,
+	boundaryB *latlng.LatLng) bool {
+	// Boundary min-maxes
+	maxLat := math.Max(boundaryA.Latitude, boundaryB.Latitude)
+	minLat := math.Min(boundaryA.Latitude, boundaryB.Latitude)
+	maxLng := math.Max(boundaryA.Longitude, boundaryB.Longitude)
+	minLng := math.Min(boundaryA.Longitude, boundaryB.Longitude)
+
+	// Point min-maxes
+	pointMaxLat := math.Max(point1.Latitude, point2.Latitude)
+	pointMinLat := math.Min(point1.Latitude, point2.Latitude)
+	pointMaxLng := math.Max(point1.Longitude, point2.Longitude)
+	pointMinLng := math.Min(point1.Longitude, point2.Longitude)
+
+	if (pointMaxLat <= maxLat && pointMaxLat >= minLat) ||
+		(pointMinLat <= maxLat && pointMinLat >= minLat) ||
+		(pointMaxLng <= maxLng && pointMaxLng >= minLng) ||
+		(pointMinLng <= maxLng && pointMinLng >= minLng) {
+		return true
+	}
+
+	return false
+}
+
 // asTheCrowFlies finds a new coordinate the provided distance (in meters) away in the
 // bearing provided. North is bearing 0, E is bearing 90, etc. Assumes crows take into
 // account the curvature of the Earth.
 func asTheCrowFlies(point *latlng.LatLng, distance, bearing float64) *latlng.LatLng {
-	lat := point.Latitude * DegreesToRadians
-	lng := point.Longitude * DegreesToRadians
-	angularDistance := distance / EarthRadius
-	trueCourse := bearing * DegreesToRadians
+	lat := point.Latitude * degreesToRadians
+	lng := point.Longitude * degreesToRadians
+	angularDistance := distance / earthRadius
+	trueCourse := bearing * degreesToRadians
 
 	newLat := math.Asin(
 		math.Sin(lat)*math.Cos(angularDistance) +
@@ -143,8 +167,8 @@ func asTheCrowFlies(point *latlng.LatLng, distance, bearing float64) *latlng.Lat
 	newLng := math.Mod(lng+lngDist+math.Pi, 2*math.Pi) - math.Pi
 
 	newPoint := latlng.LatLng{
-		Latitude:  newLat * RadiansToDegrees,
-		Longitude: newLng * RadiansToDegrees,
+		Latitude:  newLat * radiansToDegrees,
+		Longitude: newLng * radiansToDegrees,
 	}
 
 	return &newPoint
@@ -152,13 +176,13 @@ func asTheCrowFlies(point *latlng.LatLng, distance, bearing float64) *latlng.Lat
 
 // haversineDistance finds the Haversine distance in meters between two points
 func haversineDistance(pointA, pointB *latlng.LatLng) float64 {
-	latDist := (pointB.Latitude - pointA.Latitude) * DegreesToRadians
-	lngDist := (pointB.Longitude - pointA.Longitude) * DegreesToRadians
+	latDist := (pointB.Latitude - pointA.Latitude) * degreesToRadians
+	lngDist := (pointB.Longitude - pointA.Longitude) * degreesToRadians
 
-	latA := pointA.Latitude * DegreesToRadians
-	latB := pointB.Latitude * DegreesToRadians
+	latA := pointA.Latitude * degreesToRadians
+	latB := pointB.Latitude * degreesToRadians
 
-	return 2 * EarthRadius * math.Asin(math.Sqrt(
+	return 2 * earthRadius * math.Asin(math.Sqrt(
 		math.Pow(math.Sin(latDist/2), 2)+
 			math.Pow(math.Sin(lngDist/2), 2)*math.Cos(latA)*math.Cos(latB)))
 }

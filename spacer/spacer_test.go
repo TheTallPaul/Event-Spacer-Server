@@ -57,7 +57,7 @@ var eventPoint8 = latlng.LatLng{
 var eventTest1 = firestorerepo.Event{
 	ClaimedSpots:  map[string]time.Time{},
 	Expiration:    time.Time{},
-	Name:          "eventTest1",
+	Name:          "eventTest",
 	NWBoundary:    &onePoint,
 	SEBoundary:    &zeroPoint,
 	SpacedPoints:  []*latlng.LatLng{},
@@ -66,7 +66,7 @@ var eventTest1 = firestorerepo.Event{
 
 var expectedEventTest1 = firestorerepo.Event{
 	Expiration: time.Time{},
-	Name:       "eventTest1",
+	Name:       "eventTest",
 	NWBoundary: &onePoint,
 	SEBoundary: &zeroPoint,
 	SpacedPoints: []*latlng.LatLng{
@@ -83,19 +83,46 @@ var expectedEventTest1 = firestorerepo.Event{
 	SpacingMeters: 28000,
 }
 
+var eventTest2 = firestorerepo.Event{
+	ClaimedSpots:  map[string]time.Time{},
+	Expiration:    time.Time{},
+	Name:          "eventTest",
+	NWBoundary:    &onePoint,
+	SEBoundary:    &zeroPoint,
+	SpacedPoints:  []*latlng.LatLng{},
+	SpacingMeters: 28000,
+}
+
+var expectedEventTest2 = firestorerepo.Event{
+	ClaimedSpots:  map[string]time.Time{},
+	Expiration:    time.Time{},
+	Name:          "eventTest1",
+	NWBoundary:    &onePoint,
+	SEBoundary:    &zeroPoint,
+	SpacedPoints:  []*latlng.LatLng{&halfPoint},
+	SpacingMeters: 28000,
+}
+
 var CreateSpacedPointsTestCases = []struct {
 	event         *firestorerepo.Event
+	maxNumPoints  int
 	expectedEvent *firestorerepo.Event
 }{
 	{
 		&eventTest1,
+		50,
 		&expectedEventTest1,
+	},
+	{
+		&eventTest2,
+		1,
+		&expectedEventTest2,
 	},
 }
 
 func TestCreateSpacedPoints(t *testing.T) {
 	for _, input := range CreateSpacedPointsTestCases {
-		CreateSpacedPoints(input.event)
+		CreateSpacedPoints(input.event, input.maxNumPoints)
 
 		if !reflect.DeepEqual(
 			input.event.SpacedPoints,
@@ -140,6 +167,68 @@ func TestInBoundaries(t *testing.T) {
 					"but we got %v",
 				input.point.Latitude,
 				input.point.Longitude,
+				input.boundaryA.Latitude,
+				input.boundaryA.Longitude,
+				input.boundaryB.Latitude,
+				input.boundaryB.Longitude,
+				input.expectedTruth,
+				truthiness,
+			)
+		}
+	}
+}
+
+var partiallyInBoundariesTestCases = []struct {
+	point1        latlng.LatLng
+	point2        latlng.LatLng
+	boundaryA     *latlng.LatLng
+	boundaryB     *latlng.LatLng
+	expectedTruth bool
+}{
+	{
+		halfPoint,
+		halfPoint,
+		&zeroPoint,
+		&onePoint,
+		true,
+	},
+	{
+		zeroPoint,
+		onePoint,
+		&zeroPoint,
+		&onePoint,
+		true,
+	},
+	{
+		halfPoint,
+		pioneerCourthouse,
+		&zeroPoint,
+		&onePoint,
+		true,
+	},
+	{
+		broadwayYamhill,
+		pioneerCourthouse,
+		&zeroPoint,
+		&onePoint,
+		false,
+	},
+}
+
+func TestPartiallyInBoundaries(t *testing.T) {
+	for _, input := range partiallyInBoundariesTestCases {
+		truthiness := partiallyInBoundaries(
+			input.point1, input.point2, input.boundaryA, input.boundaryB)
+
+		if truthiness != input.expectedTruth {
+			t.Errorf(
+				"FAIL: Want evaluation of (%v, %v) and (%v, %v) being "+
+					"partially in the boundary of (%v, %v) and (%v, "+
+					"%v) to be: %v, but we got %v",
+				input.point1.Latitude,
+				input.point1.Longitude,
+				input.point2.Latitude,
+				input.point2.Longitude,
 				input.boundaryA.Latitude,
 				input.boundaryA.Longitude,
 				input.boundaryB.Latitude,

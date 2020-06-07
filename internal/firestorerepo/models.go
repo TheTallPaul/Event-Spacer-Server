@@ -17,3 +17,41 @@ type Event struct {
 	SpacedPoints  []*latlng.LatLng     `firestore:"spaced_points"`
 	SpacingMeters float64              `firestore:"spacing_meters"`
 }
+
+// FirestoreEvent is the payload of a Firestore event.
+type FirestoreEvent struct {
+	OldValue   FirestoreValue `json:"oldValue"`
+	Value      FirestoreValue `json:"value"`
+	UpdateMask struct {
+		FieldPaths []string `json:"fieldPaths"`
+	} `json:"updateMask"`
+}
+
+// FirestoreValue holds Firestore fields.
+type FirestoreValue struct {
+	CreateTime time.Time `json:"createTime"`
+	Fields     RawEvent  `json:"fields"`
+	Name       string    `json:"name"`
+	UpdateTime time.Time `json:"updateTime"`
+}
+
+// RawEvent is a struct that holds the Firestore fields for eventual conversion to
+// Document Snapshot type Event. Yes, this is overcomplicated, watch
+// https://github.com/googleapis/google-cloud-go/issues/1438 for an eventual solution.
+type RawEvent struct {
+	Expiration struct {
+		Value time.Time `json:"timestampValue"`
+	} `json:"expiration"`
+	Name struct {
+		Value string `json:"stringValue"`
+	} `json:"name"`
+	NWBoundary struct {
+		Value *latlng.LatLng `json:"geoPointValue"`
+	} `json:"nw_boundary"`
+	SEBoundary struct {
+		Value *latlng.LatLng `json:"geoPointValue"`
+	} `json:"se_boundary"`
+	SpacingMeters struct {
+		Value float64 `json:"doubleValue"`
+	} `json:"spacing_meters"`
+}

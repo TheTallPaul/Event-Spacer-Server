@@ -2,19 +2,18 @@ package firestorerepo
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 )
 
-// client is a Firestore client, reused between function invocations.
+// client is a Firestore client, reused between function invocations
 var client *firestore.Client
 
 func init() {
 	// Use context.Background() because the app/client should persist across
-	// invocations.
+	// invocations
 	ctx := context.Background()
 	config := &firebase.Config{ProjectID: projectID}
 
@@ -29,16 +28,10 @@ func init() {
 	}
 }
 
-// FetchEvent returns a Firestore event document matching the provided ID
-func FetchEvent(ctx context.Context, eventID string) (Event, error) {
-	var event Event
-	doc, err := client.Doc("event/" + eventID).Get(ctx)
-	if err != nil {
-		return event, errors.New("Fetching event " + eventID + " failed")
-	}
-	if err := doc.DataTo(&event); err != nil {
-		return event, errors.New("Failed to convert event json data to struct")
-	}
+// UpdateEvent updates the Firebase collection with the provided event
+func UpdateEvent(ctx context.Context, event Event) error {
+	result, err := client.Doc("events/"+event.ID).Set(ctx, event)
+	log.Println("client.Doc: ", result)
 
-	return event, nil
+	return err
 }

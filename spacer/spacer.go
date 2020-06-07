@@ -1,4 +1,5 @@
-// Package spacer provides functions for
+// Package spacer provides a function for adding geo-points that are spaced out
+// equidistant from each other, taking into account the curvature of the Earth
 package spacer
 
 import (

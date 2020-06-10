@@ -10,7 +10,6 @@ import (
 type Event struct {
 	ID            string               `firestore:"-"`
 	ClaimedSpots  map[string]time.Time `firestore:"claimed_spots"`
-	Expiration    time.Time            `firestore:"expiration"`
 	Name          string               `firestore:"name"`
 	NWBoundary    *latlng.LatLng       `firestore:"nw_boundary"`
 	SEBoundary    *latlng.LatLng       `firestore:"se_boundary"`
@@ -39,9 +38,6 @@ type FirestoreValue struct {
 // Document Snapshot type Event. Yes, this is overcomplicated, watch
 // https://github.com/googleapis/google-cloud-go/issues/1438 for an eventual solution.
 type RawEvent struct {
-	Expiration struct {
-		Value time.Time `json:"timestampValue"`
-	} `json:"expiration"`
 	Name struct {
 		Value string `json:"stringValue"`
 	} `json:"name"`

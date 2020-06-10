@@ -15,7 +15,7 @@ func init() {
 	// Use context.Background() because the app/client should persist across
 	// invocations
 	ctx := context.Background()
-	config := &firebase.Config{ProjectID: projectID}
+	config := &firebase.Config{ProjectID: "event-spacer"}
 
 	app, err := firebase.NewApp(ctx, config)
 	if err != nil {

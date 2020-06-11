@@ -6,7 +6,6 @@ import (
 	"context"
 	"log"
 	"path"
-	"time"
 
 	"google.golang.org/genproto/googleapis/type/latlng"
 
@@ -26,7 +25,7 @@ func SpaceEvent(ctx context.Context, fireEvent firestorerepo.FirestoreEvent) err
 	// Create a correctly-formatted event from the payload
 	var event = firestorerepo.Event{
 		ID:            path.Base(fireEvent.Value.Name),
-		ClaimedSpots:  map[string]time.Time{},
+		ClaimedSpots:  map[string]bool{},
 		Name:          fireEvent.Value.Fields.Name.Value,
 		NWBoundary:    fireEvent.Value.Fields.NWBoundary.Value,
 		SEBoundary:    fireEvent.Value.Fields.SEBoundary.Value,

@@ -8,13 +8,13 @@ import (
 
 // An Event is a struct conversion of a Firestore document for events
 type Event struct {
-	ID            string               `firestore:"-"`
-	ClaimedSpots  map[string]time.Time `firestore:"claimed_spots"`
-	Name          string               `firestore:"name"`
-	NWBoundary    *latlng.LatLng       `firestore:"nw_boundary"`
-	SEBoundary    *latlng.LatLng       `firestore:"se_boundary"`
-	SpacedPoints  []*latlng.LatLng     `firestore:"spaced_points"`
-	SpacingMeters float64              `firestore:"spacing_meters"`
+	ID            string           `firestore:"-"`
+	ClaimedSpots  map[string]bool  `firestore:"claimed_spots"`
+	Name          string           `firestore:"name"`
+	NWBoundary    *latlng.LatLng   `firestore:"nw_boundary"`
+	SEBoundary    *latlng.LatLng   `firestore:"se_boundary"`
+	SpacedPoints  []*latlng.LatLng `firestore:"spaced_points"`
+	SpacingMeters float64          `firestore:"spacing_meters"`
 }
 
 // FirestoreEvent is the payload of a Firestore event.
